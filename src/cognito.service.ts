@@ -43,7 +43,7 @@ export class CognitoService {
         .digest('base64')  
       } 
 
-    async signInCommand(email: string, password: string) {
+    signInCommand(email: string, password: string) {
         console.log(process.env.AWS_COGNITO_CLIENT_SECRET);
         const params: InitiateAuthCommandInput = {
             AuthFlow: "USER_PASSWORD_AUTH",
@@ -55,16 +55,17 @@ export class CognitoService {
             },
         };
 
-        return await this.cognitoClient.send(
+        return this.cognitoClient.send(
             new InitiateAuthCommand(params),
         );
     }
 
-    async signUpCommand(email: string, password: string) {
+    signUpCommand(email: string, password: string) {
         const params: SignUpCommandInput = {
             ClientId: process.env.AWS_COGNITO_CLIENT_ID,
             Username: email,
             Password: password,
+            SecretHash: this.getHashSecret(email),
             UserAttributes: [
                 {
                     Name: 'email',
@@ -73,74 +74,78 @@ export class CognitoService {
             ],
         };
 
-        return await this.cognitoClient.send(new SignUpCommand(params));
+        return this.cognitoClient.send(new SignUpCommand(params));
     }
 
-    async confirmSignUpCommand(email: string, confirmationCode: string) {
+    confirmSignUpCommand(email: string, confirmationCode: string) {
         const params: ConfirmSignUpCommandInput = {
             ClientId: process.env.AWS_COGNITO_CLIENT_ID,
             Username: email,
             ConfirmationCode: confirmationCode,
+            SecretHash: this.getHashSecret(email),
         };
 
-        return await this.cognitoClient.send(new ConfirmSignUpCommand(params));
+        return this.cognitoClient.send(new ConfirmSignUpCommand(params));
     }
 
 
-    async resendConfirmationCodeCommand(email: string) {
+     resendConfirmationCodeCommand(email: string) {
         const params: ResendConfirmationCodeCommandInput = {
             ClientId: process.env.AWS_COGNITO_CLIENT_ID,
             Username: email,
+            SecretHash: this.getHashSecret(email),
         };
 
-        return await this.cognitoClient.send(
+        return this.cognitoClient.send(
             new ResendConfirmationCodeCommand(params),
         );
     }
 
-    async forgotPasswordCommand(email: string) {
+     forgotPasswordCommand(email: string) {
         const params: ForgotPasswordCommandInput = {
             ClientId: process.env.AWS_COGNITO_CLIENT_ID,
             Username: email,
+            SecretHash: this.getHashSecret(email),
         };
 
-        return await this.cognitoClient.send(new ForgotPasswordCommand(params));
+        return  this.cognitoClient.send(new ForgotPasswordCommand(params));
     }
 
-    async confirmForgotPasswordCommand(email: string, confirmationCode: string, newPassword: string) {
+     confirmForgotPasswordCommand(email: string, confirmationCode: string, newPassword: string) {
         const params: ConfirmForgotPasswordCommandInput = {
             ClientId: process.env.AWS_COGNITO_CLIENT_ID,
             Username: email,
             ConfirmationCode: confirmationCode,
             Password: newPassword,
+            SecretHash: this.getHashSecret(email),
         };
 
-        return await this.cognitoClient.send(
+        return  this.cognitoClient.send(
             new ConfirmForgotPasswordCommand(params),
         );
     }
 
-    async changePasswordCommand(accessToken: string, oldPassword: string, newPassword: string) {
+     changePasswordCommand(accessToken: string, oldPassword: string, newPassword: string) {
         const params: ChangePasswordCommandInput = {
             AccessToken: accessToken,
             PreviousPassword: oldPassword,
             ProposedPassword: newPassword,
         };
 
-        return await this.cognitoClient.send(new ChangePasswordCommand(params));
+        return  this.cognitoClient.send(new ChangePasswordCommand(params));
     }
 
-    async listIdentityProvidersCommand() {
+     listIdentityProvidersCommand() {
         const params: ListIdentityProvidersCommandInput = {
             UserPoolId: process.env.AWS_COGNITO_USER_POOL_ID,
         };
 
-        return await this.cognitoClient.send(
+        return  this.cognitoClient.send(
             new ListIdentityProvidersCommand(params),
         );
     }
 
-    async respondToNewPasswordChallenge(
+     respondToNewPasswordChallenge(
         email: string,
         newPassword: string,
         session: string,
@@ -158,8 +163,7 @@ export class CognitoService {
 
         try {
             const command = new RespondToAuthChallengeCommand(params);
-            const response = await this.cognitoClient.send(command);
-            return response;
+            return this.cognitoClient.send(command);
         } catch (error) {
             throw new Error(error.message);
         }
@@ -217,7 +221,7 @@ export class CognitoService {
         });
     }
 
-    async getProviderUrl(identityProvider: string, clientId: string) {
+    getProviderUrl(identityProvider: string, clientId: string) {
         const baseUrl = `${process.env.AWS_COGNITO_DOMAIN}`;
 
         const params = new URLSearchParams();
